@@ -32,6 +32,67 @@
         border-radius: 4px;
     }
 
+    /* --- Legend Styling --- */
+    .timeline-legend {
+        max-width: 900px;
+        margin: 0 auto 20px;
+        padding: 10px 20px;
+        background: #fff;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+    }
+
+    .timeline-legend summary {
+        font-weight: bold;
+        cursor: pointer;
+        padding: 5px 0;
+        list-style: none; /* Hide default arrow */
+    }
+    .timeline-legend summary::before {
+        content: '▶'; /* Custom closed arrow */
+        margin-right: 8px;
+        display: inline-block;
+        transition: transform 0.2s;
+    }
+    .timeline-legend[open] summary::before {
+        content: '▼'; /* Custom open arrow */
+        transform: rotate(0deg);
+    }
+
+    .legend-content {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 30px;
+        padding-top: 10px;
+        border-top: 1px dashed #eee;
+    }
+
+    .legend-group h3 {
+        font-size: 1.1em;
+        margin-top: 0;
+        margin-bottom: 5px;
+        color: #333;
+    }
+
+    .legend-group table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9em;
+    }
+
+    .legend-group td {
+        padding: 4px 8px 4px 0;
+        vertical-align: top;
+    }
+
+    .legend-box {
+        width: 20px; /* Space for the color box */
+        padding: 0 !important;
+        border-left: 5px solid; /* Use the border for color */
+        height: 1.2em;
+        background: #f9f9f9;
+    }
+    
     /* Timeline Styling */
     .timeline {
         position: relative;
@@ -176,13 +237,36 @@
         font-weight: bold;
     }
 
-    /* Responsive Design (Unchanged) */
+    /* --- Responsive Design --- */
+    
+    /* 1. Legend adjustment for very small screens */
+    @media screen and (max-width: 600px) {
+        .legend-content {
+            flex-direction: column;
+            gap: 20px;
+        }
+        .legend-group td {
+            padding-right: 2px; /* Reduce padding to save space */
+        }
+    }
+    
+    /* 2. Timeline collapse for tablets and phones */
     @media screen and (max-width: 768px) {
+        body {
+            margin: 10px;
+        }
+        .controls {
+            padding: 0;
+            justify-content: space-around;
+        }
+        
         .timeline::before { left: 20px; }
         .year-marker { left: 20px; transform: none; }
+        
         .timeline-event { 
             width: calc(100% - 60px); 
             left: 40px !important; 
+            padding: 10px; /* Reduce padding */
         }
         .timeline-event::before { 
             left: -45px !important; 
@@ -190,13 +274,46 @@
             width: 20px; 
             height: 20px;
         }
+        .event-title {
+            font-size: 1em; /* Make title slightly smaller */
+        }
     }
 </style>
 </head>
 <body>
 
 <h1>WW2 Film Timeline</h1>
+<details class="timeline-legend">
+    <summary>Timeline Legend</summary>
+    <div class="legend-content">
+        <div class="legend-group">
+            <h3>Classification Color</h3>
+            <table>
+                <tr><td class="legend-box classification-Documentary"></td><td>**Documentary** (Solid Green line)</td></tr>
+                <tr><td class="legend-box classification-Dramatisation"></td><td>**Dramatisation** (Solid Amber line)</td></tr>
+                <tr><td class="legend-box classification-Fiction"></td><td>**Fiction** (Solid Red line)</td></tr>
+            </table>
+        </div>
 
+        <div class="legend-group">
+            <h3>Historical Accuracy Rating</h3>
+            <table>
+                <tr><td>**5/5**</td><td>Highly accurate, closely follows historical records with minimal dramatization.</td></tr>
+                <tr><td>**4/5**</td><td>Mostly accurate, with some dramatized elements or composite characters.</td></tr>
+                <tr><td>**3/5**</td><td>Balanced mix of fact and fiction; key events are real but heavily dramatized.</td></tr>
+                <tr><td>**2/5**</td><td>Loosely based on history; significant liberties taken.</td></tr>
+                <tr><td>**1/5**</td><td>Fictional story with minimal historical grounding.</td></tr>
+            </table>
+        </div>
+        
+        <div class="legend-group">
+            <h3>Other Symbols</h3>
+            <table>
+                <tr><td><span class="watched-status-icon">✔</span></td><td>Film has been **Watched**</td></tr>
+            </table>
+        </div>
+    </div>
+</details>
 <div class="controls">
     <input type="text" id="searchInput" placeholder="Search..." disabled>
     <select id="watchedFilter" disabled>
