@@ -236,7 +236,15 @@
         margin-left: 5px;
         font-weight: bold;
     }
-
+    
+    .notes-indicator {
+        font-size: 1em;
+        color: #4CAF50; /* A friendly green color */
+        margin-left: 5px;
+        font-weight: bold;
+        cursor: help; /* Change mouse cursor to hint interactivity */
+    }
+    
     /* --- Responsive Design --- */
     
     /* 1. Legend adjustment for very small screens */
@@ -310,6 +318,7 @@
             <h3>Other Symbols</h3>
             <table>
                 <tr><td><span class="watched-status-icon">✔</span></td><td>Film has been **Watched**</td></tr>
+                <tr><td><span class="notes-indicator">&#9999;</span></td><td>Film has **Notes** (Click card to view)</td></tr>
             </table>
         </div>
     </div>
@@ -457,10 +466,18 @@ function renderTimeline(filteredData) {
             const watchedStatus = film.Watched && film.Watched.toLowerCase() === 'yes'
                 ? `Yes <span class="watched-status-icon" title="You have watched this film.">✔</span>`
                 : (film.Watched || "No");
+            
+            // --- NEW: Notes Indicator ---
+            let notesIndicator = '';
+            if (film.Notes) {
+                // We use a pencil or similar icon to indicate extra information
+                notesIndicator = `<span class="notes-indicator" title="Click to view notes!">&#9999;</span>`;
+            }
+            // --- END NEW: Notes Indicator ---
 
             const title = document.createElement("div");
             title.className = "event-title";
-            title.innerHTML = `${film.FilmTitle} <span style="font-weight: normal;">(${film.ReleaseYear || "n/a"})</span>`;
+            title.innerHTML = `${imageHTML}${film.FilmTitle} <span style="font-weight: normal;">(${film.ReleaseYear || "n/a"})</span>${notesIndicator}`;
             event.appendChild(title);
 
             const details = document.createElement("div");
