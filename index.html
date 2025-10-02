@@ -31,7 +31,7 @@
         border: 1px solid #ccc;
         border-radius: 4px;
     }
-
+    
     /* --- Legend Styling --- */
     .timeline-legend {
         max-width: 900px;
@@ -46,16 +46,16 @@
         font-weight: bold;
         cursor: pointer;
         padding: 5px 0;
-        list-style: none; /* Hide default arrow */
+        list-style: none;
     }
     .timeline-legend summary::before {
-        content: '▶'; /* Custom closed arrow */
+        content: '▶';
         margin-right: 8px;
         display: inline-block;
         transition: transform 0.2s;
     }
     .timeline-legend[open] summary::before {
-        content: '▼'; /* Custom open arrow */
+        content: '▼';
         transform: rotate(0deg);
     }
 
@@ -86,9 +86,9 @@
     }
 
     .legend-box {
-        width: 20px; /* Space for the color box */
+        width: 20px;
         padding: 0 !important;
-        border-left: 5px solid; /* Use the border for color */
+        border-left: 5px solid;
         height: 1.2em;
         background: #f9f9f9;
     }
@@ -116,7 +116,7 @@
         position: relative;
         margin-bottom: 80px;
         width: 100%;
-        padding-top: 30px; /* Space for the year marker */
+        padding-top: 30px;
     }
 
     .year-marker {
@@ -147,7 +147,7 @@
         display: flex;
         flex-direction: column;
         gap: 8px;
-        border-left: 5px solid #ccc; /* Default border */
+        border-left: 5px solid #ccc;
     }
 
     .timeline-event:hover {
@@ -156,9 +156,9 @@
     }
 
     /* Color Coding by Classification */
-    .classification-Documentary { border-left-color: #1a8754; /* Green */ }
-    .classification-Dramatisation { border-left-color: #ffc107; /* Yellow/Amber */ }
-    .classification-Fiction { border-left-color: #dc3545; /* Red */ }
+    .classification-Documentary { border-left-color: #1a8754; }
+    .classification-Dramatisation { border-left-color: #ffc107; }
+    .classification-Fiction { border-left-color: #dc3545; }
     
     .timeline-event.watched { 
         border-left-width: 5px; 
@@ -187,6 +187,15 @@
         font-weight: bold; 
         font-size: 1.1em;
         line-height: 1.3;
+    }
+    
+    .event-image {
+        max-width: 60px;
+        height: auto;
+        border-radius: 4px;
+        margin-right: 10px;
+        float: left;
+        object-fit: cover;
     }
 
     .event-details { margin-top: 5px; color: #555; font-size: 0.9em; }
@@ -232,33 +241,32 @@
     /* Watched Status Tick Icon */
     .watched-status-icon {
         font-size: 1.1em;
-        color: #0d6efd; /* Blue checkmark */
+        color: #0d6efd;
         margin-left: 5px;
         font-weight: bold;
     }
     
+    /* Notes Indicator Icon */
     .notes-indicator {
         font-size: 1em;
-        color: #4CAF50; /* A friendly green color */
+        color: #4CAF50;
         margin-left: 5px;
         font-weight: bold;
-        cursor: help; /* Change mouse cursor to hint interactivity */
+        cursor: help;
     }
-    
+
+
     /* --- Responsive Design --- */
-    
-    /* 1. Legend adjustment for very small screens */
     @media screen and (max-width: 600px) {
         .legend-content {
             flex-direction: column;
             gap: 20px;
         }
         .legend-group td {
-            padding-right: 2px; /* Reduce padding to save space */
+            padding-right: 2px;
         }
     }
     
-    /* 2. Timeline collapse for tablets and phones */
     @media screen and (max-width: 768px) {
         body {
             margin: 10px;
@@ -274,7 +282,7 @@
         .timeline-event { 
             width: calc(100% - 60px); 
             left: 40px !important; 
-            padding: 10px; /* Reduce padding */
+            padding: 10px;
         }
         .timeline-event::before { 
             left: -45px !important; 
@@ -283,7 +291,7 @@
             height: 20px;
         }
         .event-title {
-            font-size: 1em; /* Make title slightly smaller */
+            font-size: 1em;
         }
     }
 </style>
@@ -291,6 +299,7 @@
 <body>
 
 <h1>WW2 Film Timeline</h1>
+
 <details class="timeline-legend">
     <summary>Timeline Legend</summary>
     <div class="legend-content">
@@ -318,6 +327,7 @@
             <h3>Other Symbols</h3>
             <table>
                 <tr><td><span class="watched-status-icon">✔</span></td><td>Film has been **Watched**</td></tr>
+                <tr><td><span class="notes-indicator">&#9999;</span></td><td>Film has **Notes** (Click card to view)</td></tr>
             </table>
         </div>
     </div>
@@ -350,8 +360,7 @@
 // =================================================================
 // PASTE YOUR PUBLISHED GOOGLE SHEET CSV LINK BELOW:
 const GOOGLE_DRIVE_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRmVbHMSOxqOnkOR2LzH0VaANsRdGKvPbV1rLBMDirD4B7R9C8UdpNwkmQSp95XK7xkUNmbH3vTvBqZ/pub?gid=2073570710&single=true&output=csv"; 
-// Note: I added gid=0000000000&single=true because the publish link needs it.
-// Please use the FULL URL you copied from "Publish to web" -> CSV format.
+
 
 let data = [];
 
@@ -371,14 +380,15 @@ function getPlatformIcons(watchOnText) {
 
 function renderStars(rating) {
     if (!rating) return "N/A";
+    let score = rating;
     if (rating.includes('/')) {
-        rating = parseFloat(rating.split('/')[0]);
+        score = parseFloat(rating.split('/')[0]);
     } else {
-        rating = parseFloat(rating);
+        score = parseFloat(rating);
     }
     
-    const fullStars = Math.floor(rating);
-    const halfStar = rating - fullStars >= 0.5 ? 1 : 0; 
+    const fullStars = Math.floor(score);
+    const halfStar = score - fullStars >= 0.5 ? 1 : 0; 
     const emptyStars = 5 - fullStars - halfStar;
     return `<span class="rating-stars">${"★".repeat(fullStars)}${halfStar ? "½" : ""}${"☆".repeat(emptyStars)}</span>`;
 }
@@ -387,19 +397,16 @@ function parseCSV(text) {
     const lines = text.trim().split(/\r?\n/);
     if (lines.length === 0) return [];
     
-    // Split headers respecting quotes and removing whitespace
     const headers = lines[0].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(h => h.trim().replace(/"/g, '').replace(/\s+/g, "_"));
     
     const results = [];
     for (let i = 1; i < lines.length; i++) {
-        // Split row respecting quotes
         const row = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
         if (row.length !== headers.length) continue; 
         
         const obj = {};
         headers.forEach((h, j) => {
             let value = row[j] ? row[j].trim().replace(/"/g, '') : "";
-            // Normalize EventYear
             if (h === "EventYear") {
                 value = value.split('–')[0].split(' ')[0];
             }
@@ -412,7 +419,6 @@ function parseCSV(text) {
 
 
 // Get control elements
-// fileInput is no longer needed
 const searchInput = document.getElementById('searchInput');
 const watchedFilter = document.getElementById('watchedFilter');
 const formatFilter = document.getElementById('formatFilter');
@@ -466,9 +472,21 @@ function renderTimeline(filteredData) {
                 ? `Yes <span class="watched-status-icon" title="You have watched this film.">✔</span>`
                 : (film.Watched || "No");
             
+            // --- Notes Indicator ---
+            let notesIndicator = '';
+            if (film.Notes) {
+                notesIndicator = `<span class="notes-indicator" title="Click to view notes!">&#9999;</span>`;
+            }
+            // --- Image Rendering ---
+            let imageHTML = '';
+            if (film.ImageURL) {
+                imageHTML = `<img src="${film.ImageURL}" alt="Poster for ${film.FilmTitle}" class="event-image">`;
+            }
+            // --- End Image Rendering ---
+
             const title = document.createElement("div");
             title.className = "event-title";
-            title.innerHTML = `${imageHTML}${film.FilmTitle} <span style="font-weight: normal;">(${film.ReleaseYear || "n/a"})</span>`;
+            title.innerHTML = `${imageHTML}${film.FilmTitle} <span style="font-weight: normal;">(${film.ReleaseYear || "n/a"})</span>${notesIndicator}`;
             event.appendChild(title);
 
             const details = document.createElement("div");
@@ -548,9 +566,8 @@ function applyFilters() {
 }
 
 
-// --- NEW AUTOMATIC DATA FETCH FUNCTION (More Robust) ---
+// --- AUTOMATIC DATA FETCH FUNCTION (Using robust XMLHttpRequest) ---
 async function fetchAndRenderData() {
-    // Safety check: Ensure the URL has been replaced
     if (GOOGLE_DRIVE_CSV_URL.includes("PASTE_YOUR_GOOGLE_SHEET")) {
         initialPrompt.textContent = "Configuration Error: Please paste your public Google Sheet CSV link into the GOOGLE_DRIVE_CSV_URL variable in the script to enable automatic loading.";
         toggleControls(false);
@@ -560,27 +577,23 @@ async function fetchAndRenderData() {
     initialPrompt.textContent = "Loading data from Google Drive...";
     
     try {
-        // Use XMLHttpRequest for maximum browser compatibility against CORS issues
         const xhr = new XMLHttpRequest();
         xhr.open('GET', GOOGLE_DRIVE_CSV_URL);
         
         xhr.onload = function() {
             if (xhr.status === 200) {
-                // Success: Parse and render the data
                 const csvText = xhr.responseText;
                 data = parseCSV(csvText);
                 populateDropdowns(data);
                 toggleControls(true); 
                 renderTimeline(data);
             } else {
-                // Failure: Log status code
                 initialPrompt.textContent = `ERROR: Failed to load data. HTTP Status: ${xhr.status}. Check your Google Sheet publication settings.`;
                 toggleControls(false); 
             }
         };
         
         xhr.onerror = function() {
-             // Network or general failure
              initialPrompt.textContent = "ERROR: A network issue occurred. Ensure your URL is correct and the sheet is published to the web as a CSV.";
              toggleControls(false);
         };
@@ -593,22 +606,6 @@ async function fetchAndRenderData() {
         toggleControls(false); 
     }
 }
-
-// --- Event Listeners ---
-
-// Filter events 
-[searchInput, watchedFilter, formatFilter, classificationFilter].forEach(el => {
-    el.addEventListener(el.tagName === "SELECT" ? "change" : "input", applyFilters);
-});
-
-clearFilters.addEventListener("click", () => {
-    searchInput.value = "";
-    watchedFilter.value = "";
-    formatFilter.value = "";
-    classificationFilter.value = "";
-    applyFilters();
-});
-
 
 // Initial state: Start automatic data fetch
 toggleControls(false); 
