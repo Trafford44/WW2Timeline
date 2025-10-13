@@ -56,7 +56,7 @@ async function initApp() {
   domain = config.domain;
   settings = config.settings;
 
-  applyTheme();
+  //applyTheme();
   applySettings();
   applyFeatureVisibility();
 
