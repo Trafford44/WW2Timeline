@@ -1,10 +1,10 @@
 {
-  "enableWikipedia": true,
-  "enableMapThumb": true,
+  "enableWikipedia": false,
+  "enableMapThumb": false,
   "enableExport": false,
   "enableStatsPanel": true,
   "enableMiniMap": false,
-  "enableThemeToggle": true,
+  "enableThemeToggle": false,
   "enableUserLogin": false,
   "enableCloudSync": false,
   "enableLocalStorage": true,
