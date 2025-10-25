@@ -100,7 +100,7 @@ function createEventCard(film, index) {
   const title = document.createElement("div");
   title.className = "event-title";
   title.innerHTML = `
-    ${imageHTML}${film.FilmTitle || "Untitled Film"}${film.ReleaseYear ? `<span class="release-year"> (${film.ReleaseYear})</span>` : ""}
+    ${imageHTML}${film.Title || "Untitled Film"}${film.YearOfIssue ? `<span class="release-year"> (${film.YearOfIssue})</span>` : ""}
     ${notesIndicator}
   `;
   event.appendChild(title);
@@ -114,8 +114,8 @@ function createEventCard(film, index) {
     <b>Running Time:</b> ${film.RunningTime || ""}<br>
     <b>Historical Accuracy:</b> ${renderStars(film.HistoricalAccuracy)}<br>
     <b>Short Description:</b> ${film.ShortDescription || ""}<br>
-    <b>Watch On:</b> ${film.WatchOn || ""} ${getPlatformIcons(film.WatchOn)}<br>
-    <b>Link:</b> ${film.Link ? `<a href="${film.Link}" target="_blank">View Link</a>` : ""}<br>
+    <b>Watch On:</b> ${film.Platform || ""} ${getPlatformIcons(film.Platform)}<br>
+    <b>Link:</b> ${film.PlatformLink ? `<a href="${film.PlatformLink}" target="_blank">View Link</a>` : ""}<br>
     <b>Watched:</b> ${watchedStatus}<br>
     <b>Rating:</b> ${renderStars(film.Rating || 0)}
     <span class="pin-icon" title="Click to pin/unpin this film">
