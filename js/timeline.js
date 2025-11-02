@@ -21,17 +21,19 @@ export function renderTimeline(filteredData) {
   const grouped = {};
 
   filteredData.forEach(film => {
-    let year = "Unknown Year";
-    const rawYear = String(film.EventYear || "").trim();
-    if (/^\d{4}$/.test(rawYear)) {
-      year = rawYear;
-    } else if (rawYear.includes('–') || rawYear.includes('-')) {
-      year = rawYear.split(/[–-]/)[0].trim();
-    } else if (rawYear) {
-      year = rawYear.split(' ')[0];
+    if (String(film.EventLevel || "").toLowerCase() !== "level2") {
+      let year = "Unknown Year";
+      const rawYear = String(film.EventYear || "").trim();
+      if (/^\d{4}$/.test(rawYear)) {
+        year = rawYear;
+      } else if (rawYear.includes('–') || rawYear.includes('-')) {
+        year = rawYear.split(/[–-]/)[0].trim();
+      } else if (rawYear) {
+        year = rawYear.split(' ')[0];
+      }
+      if (!grouped[year]) grouped[year] = [];
+      grouped[year].push(film);
     }
-    if (!grouped[year]) grouped[year] = [];
-    grouped[year].push(film);
   });
 
   const sortedYears = Object.keys(grouped).sort((a, b) => {
