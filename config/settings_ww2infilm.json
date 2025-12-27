@@ -1,0 +1,37 @@
+{
+  "dataSource": "googleSheets",
+  "_dataSource": "localJSON",    
+  
+  "_comment": "App identity and UI text",
+  "appTitle": "Timeline",
+  "searchPlaceholder": "Search by title, platform, classification...",
+  "noDataMessage": "No films found or all records filtered out.",
+
+  
+  "_comment": "Icon settings - NOT USED",
+  "pinIcon": {
+    "active": "📌",
+    "inactive": "📍"
+  },
+  "descriptionIcon": {
+    "collaped": "📖",
+    "open": "📕"
+  },
+  "notesIndicator": "📝",
+  "watchedIcon": "✔",
+  
+  "_comment": "UI behavior - NOT USED",
+  "defaultSortOrder": "chronological", 
+  "_comment": "Options: chronological, reverse, alphabetical - NOT USED",
+  "defaultPanelState": {
+    "legend": true,
+    "filters": true,
+    "config": true,
+    "stats": false
+  },
+
+  "_comment": "Optional: layout tweaks - NOT USED",
+  "maxTimelineWidth": "900px",
+  "defaultZoom": 1,
+  "fontSize": "1em"
+}
