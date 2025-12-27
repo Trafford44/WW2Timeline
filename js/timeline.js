@@ -1,0 +1,567 @@
+import { renderStars } from './stars.js';
+import { getPlatformIcons } from './platforms.js';
+import { applyFilters } from './filters.js';
+import { isPinned, togglePinned } from './pinnedManager.js'; 
+import { loadConfig } from './config.js';
+import { domainKey } from './domain.js';
+import { showAlert } from './alerts/alertUtils.js';
+import { errorHandler } from './alerts/errorUtils.js'; // KEPT for main async function
+import { logActivity } from './alerts/logger.js';
+import { setUIMessage } from './main.js';
+
+
+let domain = {};
+let allYearsCollapsed = false; // track state globally
+
+
+/**
+ * Groups event data by its event year for timeline rendering.
+ * @param {Array<object>} filteredData - The list of event records to group.
+ * @returns {object} An object where keys are years (string) and values are arrays of events.
+ */
+export function groupEventsByYear(filteredData) {
+  logActivity("info", "groupEventsByYear initiated", { count: filteredData?.length });
+
+  if (!Array.isArray(filteredData)) return {};
+
+  const grouped = {};
+
+  // Group by extracted year from normalisedDate
+  filteredData.forEach(event => {
+    const year = event.eventYear || "Unknown";
+
+    if (!grouped[year]) grouped[year] = [];
+    grouped[year].push(event);
+  });
+
+  // Sort within each year group
+  Object.keys(grouped).forEach(year => {
+    grouped[year].sort((a, b) => {
+      const timeA = a.normalisedDate?.getTime?.();
+      const timeB = b.normalisedDate?.getTime?.();
+
+      if (
+        timeA === timeB ||
+        timeA === undefined ||
+        timeB === undefined ||
+        isNaN(timeA) ||
+        isNaN(timeB)
+      ) {
+        const titleA = String(a.Title || "").toLowerCase();
+        const titleB = String(b.Title || "").toLowerCase();
+        return titleA.localeCompare(titleB);
+      }
+
+      return timeA - timeB;
+    });
+
+    // Optional debug log
+    /*
+    console.log(`📅 Sorted events for ${year}:`);
+    grouped[year].forEach((event, i) => {
+      const stamp = event.formattedDateNZ || "Invalid Date";
+      const title = event.Title || "undefined";
+      console.log(`  ${i + 1}. ${stamp} — ${title}`);
+    });
+    */
+  });
+
+  return grouped;
+}
+
+
+
+
+
+
+/**
+ * Creates the base HTML structure for an event card.
+ * @param {object} event - The event data object.
+ * @param {number} index - Index for left/right positioning.
+ * @returns {HTMLElement} The event card DOM element without listeners.
+ */
+function createEventCard(event, index) {
+    logActivity("info", "createEventCard initiated", { id: event.RecordID, title: event.Title });
+    
+    // Core Logic (No try/catch)
+    const card = document.createElement("div");
+    
+    card.className = `timeline-event ${index % 2 === 0 ? "left" : "right"}`;
+
+    // Add classification class, safely handling missing or compound values
+    if (event.Classification) {
+        const baseClass = String(event.Classification).split('/')[0].trim().replace(/\s/g, '-');
+        card.classList.add(`classification-${baseClass}`);
+    }
+    
+    // Initialize Pinned status based on stored state
+    if (isPinned(event.RecordID)) {
+        event.Pinned = true; // Update event object state for local rendering
+        card.classList.add("pinned");
+    }
+    
+    card.dataset.id = event.RecordID;
+    
+    
+    const watchedStatus = (event.Watched && String(event.Watched).toLowerCase() === 'yes')
+        ? `Yes <span class="watched-status-icon" title="You have watched this event.">✔</span>`
+        : (event.Watched || "No");
+    
+    const notesIndicator = event.Notes ? `<span class="notes-indicator" title="Click to view notes!">📝</span>` : '';
+    const imageHTML = event.ImageURL
+        ? `<img src="${event.ImageURL}" alt="Poster for ${event.Title || 'Untitled Event'}" class="event-image">`
+        : '';
+   
+    
+    const title = document.createElement("div");
+    title.className = "event-title";
+    title.innerHTML = `${imageHTML}${event.Title || "Untitled Event"}${event.YearOfIssue ? ` <span class="release-year">(${event.YearOfIssue})</span>` : ""}${notesIndicator}`;
+    card.appendChild(title);
+  
+    const details = document.createElement("div");
+    details.className = "event-details";
+    
+    // Use optional chaining for safer access to domain labels
+    details.innerHTML = `
+        <b>${domain.labels?.PeriodLabel || "Period"}:</b> ${event.Period || ""}
+        <br><b>${domain.labels?.FormatLabel || "Format"}:</b> ${event.Format || ""}
+        <br><b>${domain.labels?.ClassificationLabel || "Classification"}:</b> ${event.Classification || ""}
+        <br><b>${domain.labels?.RunningTimeLabel || "Running Time"}:</b> ${event.RunningTime || ""}
+        <br><b>${domain.labels?.HistoricalAccuracyLabel || "Historical Accuracy"}:</b> ${renderStars(event.HistoricalAccuracy || '')}
+        ${createToggleDescription(event.ShortDescription)}
+        ${renderPlatformField(event.Platform, event.PlatformLink)}
+        <br><b>${domain.labels?.WikipediaLabel || "Wikipedia"}:</b> ${event.Wikipedia ? `<a href="${event.Wikipedia}" target="_blank">see details..</a>` : ""}
+        <br><b>${domain.labels?.WatchedLabel || "Watched"}:</b> ${watchedStatus}
+        <br><b>${domain.labels?.RatingLabel || "Rating"}:</b> ${renderStars(event.Rating || '')}
+        <span class="pin-icon" title="Click to pin/unpin this event">
+            ${isPinned(event.RecordID) ? "📌" : "📍"}
+        </span>
+    `;
+    
+    card.appendChild(details);
+    
+    // Add notes after the detail in its own div
+    if (event.Notes) {
+        const notes = document.createElement("div");
+        notes.className = "notes";
+        notes.textContent = `Notes: ${event.Notes}`;
+        card.appendChild(notes);
+    }
+    
+    // Append the card first
+    const container = document.querySelector(".timeline-container");
+    container.appendChild(card);
+
+    // Create and append the dot to the CARD, not the container
+    const l1Dot = document.createElement("div");
+    l1Dot.className = "timeline-dot-l1";
+    l1Dot.dataset.id = event.RecordID;
+    card.appendChild(l1Dot); // <--- ATTACHED TO CARD
+
+
+    return card;
+}
+
+
+function createToggleDescription(description) {
+    // Note: Removed logActivity call for high-frequency helper function
+    // Core Logic (No try/catch)
+
+    const MAX_LENGTH = 70;
+    const descriptionText = description || "";
+    // domain is assumed to be available globally
+
+    // The unique ID will be used to link the button to the dots/hidden text.
+    // Using a reliable unique ID based on a random number.  
+    const uniqueId = `desc-toggle-${Math.random().toString(36).substring(2, 9)}`;
+    
+    if (descriptionText.length <= MAX_LENGTH) {
+        return `<br><b>${domain.labels?.ShortDescription || "Description"}:</b> ${descriptionText}`;
+    }
+    
+    // 1. Split the text
+    const shortText = descriptionText.substring(0, MAX_LENGTH);
+    let hiddenText = descriptionText.substring(MAX_LENGTH);
+    
+    // Check if the first character of the hidden text is a space. If so, remove it.  To address issue where space appears at start of hidden text.
+    if (hiddenText.startsWith(' ')) {
+        hiddenText = hiddenText.substring(1);
+    }
+
+    // 2. Build the HTML structure
+    // NOTE: toggleText is defined below and must be globally accessible (i.e., defined outside modules or attached to window) 
+    // or referenced differently if you want to avoid inline 'onclick'.    
+    // Wrap the short text in span, 'description-short-text', to make it clickable as well.
+    return `
+        <br><b>${domain.labels?.ShortDescription || "Description"}:</b> 
+        <span 
+            class="description-toggle-icon"
+            data-target-id="${uniqueId}"
+            title="Click to expand/collapse description"
+            style="cursor: pointer;"
+        >
+            📖
+        </span>
+        <span class="description-short-text" data-target-id="${uniqueId}" style="cursor: pointer;">
+            ${shortText}
+        </span>
+        <span id="${uniqueId}-dots">...</span>
+        <span id="${uniqueId}-more" style="display: none;">${hiddenText}</span>
+    `;
+}
+
+function renderPlatformField(platform, link) {
+    // Note: Removed logActivity call for high-frequency helper function
+
+    // Core Logic (No try/catch)
+    const label = domain.labels?.PlatformLabel || "Platform"; // Defaulted to 'Platform'
+    
+    if (link) {
+        const linkText = platform || "link";
+        // NOTE: getPlatformIcons(platform) ensures consistent icons regardless of link presence
+        return `<br><b>${label}:</b> <a href="${link}" target="_blank">${linkText}</a> ${getPlatformIcons(platform)}`;
+    } else if (platform) {
+        return `<br><b>${label}:</b> ${platform} ${getPlatformIcons(platform)}`;
+    } else {
+        // Only return the label if both platform and link are null/empty, otherwise return nothing.
+        // Returning just the label with an empty string might be confusing in the UI.
+        return ''; 
+    }
+}
+
+
+/**
+ * Toggles the visibility of the "..." and the full description text, and updates the icon.
+ * NOTE: This function assumes the icon is always the element immediately preceding 
+ * the 'description-short-text' span in the DOM.
+ * Also, it MUST be attached to the window object 
+// for the inline 'onclick' in createToggleDescription to work.
+// Alternatively, remove the inline 'onclick' and rely on the DOM listener below.
+ * * @param {HTMLElement} element - The clickable element (icon or short text).
+ * @param {string} targetId - The unique ID linking the parts (e.g., 'desc-toggle-xxxxxxx').
+ */
+function toggleText(element, targetId) {
+    const dots = document.getElementById(targetId + '-dots');
+    const moreText = document.getElementById(targetId + '-more');
+
+    if (!dots || !moreText) {
+        console.error("Toggle elements not found for ID:", targetId);
+        return;
+    }
+
+    // Determine the icon element: If the clicked element is the short text span, 
+    // the icon is its previous sibling (the description-toggle-icon).
+    const iconElement = element.classList.contains('description-toggle-icon') ? 
+        element : 
+        element.previousElementSibling;
+
+    // Check if the text is currently expanded (i.e., dots are hidden)
+    const isExpanded = dots.style.display === 'none';
+
+    if (isExpanded) {
+        // Collapse: Hide more text, show dots
+        dots.style.display = 'inline';
+        moreText.style.display = 'none';
+        iconElement.textContent = '📖'; // Change icon to 'Read More' (book)
+    } else {
+        // Expand: Hide dots, show more text
+        dots.style.display = 'none';
+        moreText.style.display = 'inline';
+        iconElement.textContent = '📕'; // Change icon to 'Close/Collapse' (minus sign)
+    }
+}
+
+
+
+/**
+ * Attaches event listeners to the event card for interaction (pinning and notes).
+ * @param {HTMLElement} card - The event card DOM element.
+ * @param {object} event - The event data object.
+ */
+function attachEventCardListeners(card, event) {
+    logActivity("info", "attachEventCardListeners initiated", { id: event.RecordID });
+    
+    // Core Logic (No try/catch)
+    const pinSpan = card.querySelector(".pin-icon");
+    const notesDiv = card.querySelector(".notes");
+    const titleDiv = card.querySelector(".event-title");
+    
+    // --- Pinning Listener ---
+    if (pinSpan) {
+        pinSpan.addEventListener("click", (e) => {
+            e.stopPropagation();
+            
+            // Toggle in local storage and get the new status
+            const isNowPinned = togglePinned(event.RecordID); 
+            event.Pinned = isNowPinned; // Update local JS object state
+            
+            card.classList.toggle("pinned", isNowPinned); // Update visual class
+            pinSpan.innerHTML = isNowPinned ? "📌" : "📍"; // Update pin emoji
+            
+            // Re-render/Update view based on new pin state (calls applyFilters with no args now!)
+            applyFilters(); 
+        });
+    }
+    
+    // --- Notes Toggle Listener (Clicking the Title) ---
+    if (notesDiv && titleDiv) {
+        titleDiv.addEventListener("click", () => {
+            notesDiv.classList.toggle("show");
+        });
+    }
+    
+    // --- Description Toggle Listener (DOM-based) ---
+    // Select both the icon AND the new short text span
+    card.querySelectorAll(".description-toggle-icon, .description-short-text").forEach((element) => {
+        element.addEventListener("click", () => {
+            const targetId = element.dataset.targetId;
+            // Call the shared toggle logic
+            toggleText(element, targetId); 
+        });
+    });
+}
+
+
+// Function updated to use the new .level2-event-header class
+function renderLevel2Event(event) {
+  const wrapper = document.createElement("div");
+  wrapper.className = "timeline-level2-event";
+  wrapper.dataset.id = event.RecordID;
+
+  const date = event.formattedLocalDate || "Unknown";
+
+  const left = document.createElement("div");
+  left.className = "timeline-side left";
+  left.innerHTML = `<span class="level2-event-date">${date}</span>`;
+
+  const dot = document.createElement("div");
+  dot.className = "timeline-dot";
+  // The dot color is now controlled purely by CSS classes (default black).
+
+
+  const right = document.createElement("div");
+  right.className = "timeline-side right";
+
+  // Info indicator appears only if either Wikipedia AND ShortDescription exist.
+  const hasInfo = event.Wikipedia || event.ShortDescription;
+  const infoIndicator = hasInfo ? `<span class="info-indicator" title="More information.">&#x24D8;</span>` : '';          
+  const title = `<div class="level2-event-title">${event.Title || "Untitled Event"}${infoIndicator}</div>`;
+  
+  // Build content for the collapsible details panel
+  let detailsContent = '';
+  const wikipediaLabel = domain.labels?.WikipediaLabel || "Wikipedia";
+
+  if (event.ShortDescription) {
+      detailsContent += `<p class="mb-2">${event.ShortDescription}</p>`;
+  }
+  
+  if (event.Wikipedia) {
+      // Add a simple link using the label from the domain configuration
+      detailsContent += `
+          <p class="mt-2">
+              <b>${wikipediaLabel}:</b> 
+              <a href="${event.Wikipedia}" target="_blank">
+                  view link
+              </a>
+          </p>
+      `;
+  }
+
+  // Fallback if no details at all
+  if (!detailsContent) {
+      detailsContent = '<p class="no-details-message">No details available.</p>';
+  }
+  
+  // Ensure 'hidden' class is present for closed by default
+  // The CSS fix ensures that this 'hidden' class now works correctly.
+  const descriptionHTML = `<div class="level2-event-details hidden">${detailsContent}</div>`;
+
+  right.innerHTML = title + descriptionHTML;
+
+  wrapper.appendChild(left);
+  wrapper.appendChild(dot);
+  wrapper.appendChild(right);
+  
+  // --- Listener to show/hide details on click ---
+  wrapper.addEventListener("click", () => {
+      const detailsDiv = wrapper.querySelector(".level2-event-details");
+      const dotEl = wrapper.querySelector(".timeline-dot");
+      
+      if (detailsDiv && dotEl) {
+          // Toggle visibility of details
+          detailsDiv.classList.toggle('hidden');
+          
+          // Toggle the dot-open class to change color
+          // If detailsDiv is no longer hidden (i.e., open), add dot-open class (Red: #ef4444)
+          const isNowOpen = !detailsDiv.classList.contains('hidden');
+          dotEl.classList.toggle('dot-open', isNowOpen);
+      }
+  });
+
+  return wrapper;
+}
+
+
+
+
+// Main Rendering Function (Asynchronous, Retains `try/catch`)
+export async function renderTimeline(filteredData) {
+  logActivity("action", "renderTimeline initiated", { filteredCount: filteredData?.length });
+
+  try {
+    const timelineContainer = document.getElementById("timelineContainer");
+    let layoutIndex = 0; // This counter tracks the position of ALL Level 1 events globally.
+
+    const config = await loadConfig(domainKey);
+    domain = config.domain || {};
+    const showLevel2Events = config.general?.showLevel2Events === true;
+
+
+    if (!timelineContainer || !initialPrompt) {
+      throw new Error("Timeline or initial prompt container not found.");
+    }
+
+    timelineContainer.innerHTML = "";
+
+    if (!Array.isArray(filteredData) || filteredData.length === 0) {
+      setUIMessage("No data found or all records filtered out.");
+      return;
+    }
+   
+
+    const grouped = groupEventsByYear(filteredData);
+    const sortedYears = Object.keys(grouped).sort((a, b) => {
+        // Ensure "Unknown Year" always appears last
+        if (a === "Unknown Year") return 1;
+        if (b === "Unknown Year") return -1;
+        // Convert to number for proper sorting
+        return parseInt(a) - parseInt(b);
+    });
+
+    const failedItems = [];
+
+    sortedYears.forEach(year => {
+      const eventsInYear = grouped[year];
+      const yearGroup = document.createElement("div");
+      yearGroup.className = "year-group"; // This element contains the year marker and all events
+
+      const yearMarker = document.createElement("div");
+      yearMarker.className = "year-marker";
+
+      const yearLabel = document.createElement("span");
+      yearLabel.className = "year-label";
+      yearLabel.textContent = year;
+
+      const countSpan = document.createElement("span");
+      countSpan.className = "year-count";
+      //countSpan.textContent = `(${eventsInYear.length} event${eventsInYear.length !== 1 ? "s" : ""})`;
+      countSpan.textContent = `(${eventsInYear.length})`;
+      
+      yearMarker.appendChild(yearLabel);
+      yearMarker.appendChild(countSpan);
+
+      // Collapse listener for the whole year group
+      yearMarker.addEventListener("click", () => {
+        yearGroup.classList.toggle("collapsed");
+      });
+
+      yearGroup.appendChild(yearMarker);
+      
+
+        //  putting a try catch here since all errors from createEventCard are lost in the forEach
+        // since a separate stack.  This code captures all the errors (since the tr/catch is within 
+        // the forEach and shows as a single alert
+      eventsInYear.forEach((event, index) => {
+        try {
+          if (String(event.EventLevel || "").toLowerCase() === "level2") {
+            if (showLevel2Events) {
+              const dot = renderLevel2Event(event);
+              yearGroup.appendChild(dot);
+            }
+          } else {
+            const card = createEventCard(event, layoutIndex);
+            layoutIndex++; // Increment only for Level 1 events
+            attachEventCardListeners(card, event);
+            yearGroup.appendChild(card);
+          }
+        } catch (err) {
+          failedItems.push(event.id || event.name || `Event ${index}`);
+          logActivity("bug","createEventCard failed", { event, err });
+        }
+      });
+      
+      // Add the whole year container to the timeline
+      timelineContainer.appendChild(yearGroup);
+    });
+
+
+    if (failedItems.length > 0) {
+      const summary =
+        failedItems.length === 1
+          ? `1 event failed to render: ${failedItems[0]}`
+          : `${failedItems.length} events failed to render.`;
+
+      setTimeout(() => {
+        showAlert(summary, "error", {
+          dismissible: true,
+          retryCallback: () => retryFailedItems(failedItems)
+        });
+      }, 0);
+    }
+  } catch (error) {
+    // CATCH: This catches loadConfig failures or fatal DOM rendering bugs.
+    errorHandler(error, "renderTimeline failed.");
+    throw error;
+  }
+}
+
+export function collapseAllYears() {
+  document.querySelectorAll('.year-group').forEach(yearGroup => {
+    yearGroup.classList.add('collapsed');
+  });
+}
+
+export function openAllYears() {
+  document.querySelectorAll('.year-group').forEach(yearGroup => {
+    yearGroup.classList.remove('collapsed');
+  });
+}
+
+
+export function toggleAllYears() {
+  const yearGroups = document.querySelectorAll('.year-group');
+
+  if (allYearsCollapsed) {
+    // Currently collapsed → open all
+    yearGroups.forEach(yearGroup => yearGroup.classList.remove('collapsed'));
+    allYearsCollapsed = false;
+    updateToggleButton(false);
+  } else {
+    // Currently open → collapse all
+    yearGroups.forEach(yearGroup => yearGroup.classList.add('collapsed'));
+    allYearsCollapsed = true;
+    updateToggleButton(true);
+  }
+}
+
+function updateToggleButton(collapsed) {
+  const btn = document.getElementById('toggleAllYearsBtn');
+  if (!btn) return;
+  if (collapsed) {
+    btn.textContent = "▼"; // icon for "Open All"
+    btn.title = "Open All Years";
+  } else {
+    btn.textContent = "▶"; // icon for "Collapse All"
+    btn.title = "Collapse All Years";
+  }
+}
+
+export function goToTop() {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+export function goToBottom() {
+  const max = document.documentElement.scrollHeight;
+  window.scrollTo({ top: max, behavior: 'smooth' });
+}
+
