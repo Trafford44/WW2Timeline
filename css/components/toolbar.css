@@ -1,0 +1,326 @@
+/* ============================
+   Top Toolbar (single source of truth)
+   ============================ */
+#toolbarTop {
+  position: fixed;
+  top: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0rem;
+  padding: 0.5rem;
+  background-color: #fff;
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 15px rgba(0,0,0,0.1),
+              0 4px 6px rgba(0,0,0,0.1);
+  z-index: 1000;
+}
+
+#toolbarTop button {
+  padding: 0.5rem;
+  font-size: 1.25rem;
+  color: #82a6a7;
+  border-radius: 9999px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+#toolbarTop button:hover {
+  color: var(--primary, #82a6a7);
+}
+
+#toolbarSearch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;        /* space between icon and textbox */
+}
+
+#toolbarSearchBtn {
+  font-size: 1rem;     /* keep consistent with other buttons */
+  padding: 0.25rem 0.5rem;
+}
+
+#toolbarSearchInput {
+  width: 140px;        /* adjust width as needed */
+  padding: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.search-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+#toolbarTop #toolbarSearchClear {
+  font-size: 1.0rem;
+  color: #9ca3af;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.0rem;
+}
+
+#toggleAllYearsBtn {
+  font-size: 1.25rem;
+  color: #689992; /* grey */
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+#toggleAllYearsBtn:hover {
+  color: var(--primary, #0077cc); /* blue on hover */
+}
+
+/* ============================
+   Panels (hamburger + minimap)
+   ============================ */
+/* Base look for both panels */
+#hamburgerPanel,
+#timelineMinimap {
+  background-color: #f9fafb;
+  box-shadow: 0 25px 50px rgba(0,0,0,0.25);
+}
+
+/* Panel headers and content (semantic, shared) */
+.panel-header {
+  /* padding: 1rem; */   /* moved to panel-body for better spacing */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.panel-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--primary, #0077cc);
+  margin: 0;
+}
+
+.panel-close {
+  font-size: 1.5rem;
+  color: #9ca3af;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  align-self: flex-start;   /* title aligned left */
+}
+.panel-close:focus {
+  outline: none;
+}
+
+.timeline-minimap .panel-header {
+  flex-direction: column;   /* stack children vertically */
+  align-items: flex-end;    /* ✖ aligned to the right */
+}
+
+.timeline-minimap .panel-title {
+  margin-top: 0.5rem;       /* spacing below the ✖ */
+  align-self: flex-start;   /* title aligned left */
+}
+
+
+.panel-body {
+  padding: 1rem;
+}
+
+.panel-muted {
+  color: #6b7280;
+}
+.panel-muted.center {
+  text-align: center;
+}
+
+/* Optional scroll constraint for minimap content */
+.panel-scroll {
+  height: calc(100vh - 6rem);
+  overflow-y: auto;
+}
+
+/* ============================
+   Hamburger Panel (overlay behavior)
+   ============================ */
+#hamburgerPanel {
+  position: fixed;
+  top: 90px;
+  bottom: 50px;                  /* anchor to bottom of viewport */
+  left: 0;
+  width: 280px;              /* unify width to match handle offset */
+  height: calc(100% - 90px - 50px); /* fill viewport minus toolbar */
+  overflow-y: auto;   /* enable vertical scrolling */
+  z-index: 999;
+  transform: translateX(-100%);  /* hidden off-screen */
+  transition: transform 0.3s ease-out;
+  -webkit-overflow-scrolling: touch; /* smooth iOS scrolling */
+  border-top-right-radius: 0.5rem;
+  border-bottom-right-radius: 0.5rem;
+}
+
+#hamburgerPanel.active {
+  transform: translateX(0);
+}
+
+/* ============================
+   Timeline Minimap Panel (overlay behavior)
+   ============================ */
+#timelineMinimap {
+  position: fixed;
+  top: 90px;
+  bottom: 50px;                  /* anchor to bottom of viewport */
+  right: 0;
+  width: 100px;              /* match with handle: body.minimap-open #minimapHandle */
+  height: calc(100% - 90px - 50px); /* fill viewport minus toolbar */
+  overflow-y: auto;   /* enable vertical scrolling */
+  z-index: 999;
+  transform: translateX(100%);   /* hidden off-screen */
+  transition: transform 0.3s ease-out;
+  -webkit-overflow-scrolling: touch; /* smooth iOS scrolling */
+  border-top-left-radius: 0.5rem;
+  border-bottom-left-radius: 0.5rem;   
+}
+
+
+#timelineMinimap.open {
+  transform: translateX(0);
+}
+
+/* ============================
+   Minimap Handle (single selector)
+   ============================ */
+#minimapHandle {
+  position: fixed;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  z-index: 998;
+  cursor: pointer;
+  transition: right 0.3s ease, transform 0.3s ease;
+  background-color: rgba(0,0,0,0.1);
+  color: #6b7280;
+  box-shadow: 0 10px 15px rgba(0,0,0,0.1);
+  padding: 0.5rem;
+  border-radius: 0.75rem 0 0 0.75rem;
+}
+
+#minimapHandle:hover {
+  background-color: #d1d5db;
+}
+
+
+/* ============================
+   Timeline Minimap Styling
+   ============================ */
+
+/* Panel open/close */
+#timelineMinimap.hidden {
+  transform: translateX(100%); /* slide out */
+}
+
+#timelineMinimap.open {
+  transform: translateX(0);    /* slide in */
+}
+
+/* Controls row at top of minimap */
+.minimap-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--border-color, #eee);
+  margin-bottom: 0.5rem;
+}
+
+.minimap-controls button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0.25rem;
+  color: var(--toolbar-icon, #333);
+}
+
+/* Scrollable content area */
+#minimapContent {
+  overflow-y: auto;
+  height: calc(100vh - 80px);
+  padding: 0 0.5rem;
+}
+
+/* Year entries */
+.minimap-year {
+  display: block;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.9rem;
+  color: var(--minimap-text, #444);
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.minimap-current-year {
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 0.5rem;
+  color: #0077cc; /* or your grey/blue palette */
+}
+
+/* Active year highlight */
+.minimap-year.active-year {
+  font-weight: bold;
+  color: var(--minimap-active, #0077cc);
+  background-color: var(--minimap-highlight, #ddeeff);
+  border-left: 3px solid #0077cc;
+}
+
+/* Hover effect (stronger specificity, keep last) */
+#timelineMinimap .minimap-year:hover {
+  background-color: var(--minimap-hover, #eef);
+}
+
+/* Active year hover — pick A or B */
+#timelineMinimap .minimap-year.active-year:hover {
+  background-color: var(--minimap-hover, #eef);
+}
+/* Or:
+#timelineMinimap .minimap-year.active-year:hover {
+  background-color: var(--minimap-highlight, #ddeeff);
+}
+*/
+
+
+
+
+
+/* Icon inside handle */
+.minimap-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  transition: transform 300ms ease;
+}
+
+/* Move handle inward when minimap is open */
+body.minimap-open #minimapHandle {
+  right: 100px;              /* matches #timelineMinimap width */
+}
+
+/* ============================
+   Remove page-shift (prevents squeeze)
+   ============================ */
+/* Delete these if present:
+body.minimap-open { margin-right: 280px; }
+body.hamburger-open { margin-left: 280px; }
+*/
+
+/* Instead, the content stays full-width and panels overlay. */
+
+/* ============================
+   Optional: layering to ensure overlays are above timeline
+   ============================ */
+.timeline-container {
+  position: relative;
+  z-index: 1;                /* below panels */
+}

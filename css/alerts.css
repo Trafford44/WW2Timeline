@@ -1,0 +1,24 @@
+.alert {
+  display: flex;
+  background-color: #fff3cd;
+  border-left: 4px solid #f5c002;
+  color: #856404;
+  padding: 1em;
+  margin: 1em 0;
+  border-radius: 4px;
+  padding: 0.4em 0.8em;   /* reduced from 0.5em 1em */
+  cursor: pointer;
+  font-size: 0.85rem;     /* slightly smaller text */
+  gap: 0.5em; /* adds space between children */  
+  align-items: center;
+}
+
+.alert-error { background: #fdd; color: #900; }
+.alert-success { background: #dfd; color: #060; }
+.alert-warning { background: #ffd; color: #990; }
+.alert-info { background: white; color: #666; }
+
+.alert button {
+  padding: 0.3em 0.6em;
+  font-size: 0.8rem;
+}

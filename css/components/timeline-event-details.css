@@ -1,0 +1,31 @@
+.notes {
+  margin-top: 8px;
+  padding: 8px;
+  background: #f0f8ff;
+  border-left: 3px solid #0077cc;
+  display: none;
+}
+
+.notes.show {
+  display: block;
+}
+
+.notes-indicator {
+  margin-left: 8px;
+  font-size: 1.1em;
+  color: #0077cc;
+}
+.description-toggle-icon {
+  cursor: pointer; 
+  margin: 0px;
+}
+
+.pin-icon {
+  cursor: pointer;
+  font-size: 1.2em;
+  float: right;
+}
+
+.Wikipedia-link {
+
+}

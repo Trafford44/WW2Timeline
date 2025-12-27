@@ -1,0 +1,15 @@
+.options-button-panel {
+  justify-content: flex-start;
+  align-items: center;
+  padding: 0.5em 1em;
+  gap: 0.5em; /* 👈 adds space between buttons */
+}
+
+/* making it a little smaller than default */
+button.options {
+  padding: 0.4em 0.8em;
+  font-size: 0.9em;
+  display: block;
+  margin-top: 0.5rem; /* or use margin-bottom */  
+}
+
